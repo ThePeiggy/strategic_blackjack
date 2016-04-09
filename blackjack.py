@@ -14,6 +14,7 @@ class Blackjack:
 
 		self._hands_won = 0
 		self._hands_lost = 0
+		self._hands_tied = 0
 
 		self._make_decision = make_decision
 
@@ -25,11 +26,12 @@ class Blackjack:
 
 	def run(self):
 		while not self._is_finished():
-			won, lost = self.play()
+			won, lost, tied = self.play()
 			self._hands_won += won
 			self._hands_lost += lost
+			self._hands_tied += tied
 
-		return self._hands_won, self._hands_lost
+		return self._hands_won, self._hands_lost, self._hands_tied
 
 	def play(self): #returns the number of games won and lost after one round
 
@@ -39,9 +41,9 @@ class Blackjack:
 		#check for blackjacks
 		dbj = self._blackjack(dealer_hand)
 		pbj = self._blackjack(player_hand)
-		if dbj and pbj: return 0, 0
-		if dbj: return 0, 1
-		if pbj: return 1, 0
+		if dbj and pbj: return 0, 0, 1
+		if dbj: return 0, 1, 0
+		if pbj: return 1, 0, 0
 
 		#split hands
 		player_games = map(lambda hand: (hand, 'U', 0), self._expand_hands(dealer_hand, player_hand))
@@ -70,6 +72,7 @@ class Blackjack:
 		#print("Dealer hand: ", dealer_hand)
 
 		#compare against each player hand
+		tied_games = []
 		new_nonbust_games = []
 		for game in nonbust_games:
 			results = self._hand_result(dealer_hand, game[0])
@@ -78,19 +81,24 @@ class Blackjack:
 			#put the losses in bust games
 			if results < 0:
 				bust_games.append((game[0], game[1], results))
-			else:
+			elif results > 0:
 				new_nonbust_games.append((game[0], game[1], results))
+			else:
+				tied_games.append((game[0], game[1], results))
 		nonbust_games = new_nonbust_games
 
 		#cumulate results
 		hands_won = 0
 		hands_lost = 0
+		hands_tied = 0
 		for game in bust_games:
 			hands_lost -= game[2]
 		for game in nonbust_games:
 			hands_won += game[2]
+		for game in tied_games:
+			hands_tied += game[2]
 
-		return hands_won, hands_lost
+		return hands_won, hands_lost, hands_tied
 
 
 	#private helpers
